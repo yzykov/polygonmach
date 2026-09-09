@@ -18,12 +18,27 @@ export interface StoredImage {
 
 export interface EntityData {
   source_id: number;
-  sources?: Record<string, {
-    source_url: string;
-    source_hash: string;
-  }>;
+  sources?: Record<
+    string,
+    {
+      source_url: string;
+      source_hash: string;
+    }
+  >;
   images?: StoredImage[];
   updated_at?: string;
+}
+
+export interface CategoryBreadcrumb {
+  source_id: number;
+  title: string;
+}
+
+export interface ProductTab {
+  id: string;
+  title: string;
+  text?: string;
+  html?: string;
 }
 
 export interface SourceContent {
@@ -35,15 +50,50 @@ export interface SourceContent {
   text?: string;
   html?: string;
 
-  // Category hierarchy.
+  breadcrumbs?: CategoryBreadcrumb[];
+  tabs?: ProductTab[];
+
   category_ids?: number[];
   product_ids?: number[];
 
   specifications?: Record<string, string>;
   updated_at?: string;
+
   [key: string]: unknown;
 }
 
 export interface EffectiveContent extends SourceContent {
   localized?: boolean;
+}
+
+export type CatalogRouteKind = "category" | "product";
+
+export interface CatalogRouteCrumb {
+  source_id: number;
+  title: string;
+  slug: string;
+}
+
+export interface CatalogRoute {
+  kind: CatalogRouteKind;
+  source_id: number;
+  title: string;
+  slug: string;
+  segments: string[];
+  breadcrumbs: CatalogRouteCrumb[];
+}
+
+export interface SiteEntityRecord {
+  index: IndexItem;
+  content: EffectiveContent;
+  data: EntityData;
+}
+
+export interface SiteBundle {
+  version: number;
+  generated_at?: string;
+  categories: Record<string, SiteEntityRecord>;
+  products: Record<string, SiteEntityRecord>;
+  routes: CatalogRoute[];
+  root_category_ids: number[];
 }

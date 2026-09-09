@@ -9,7 +9,7 @@ export function Footer() {
         <div>
           <div className="text-xl font-black">{site.name}</div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-400">
-            Каталог промышленного оборудования Polygonmach.
+            Официальный дилер в России.
           </p>
         </div>
 

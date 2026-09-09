@@ -1,139 +1,129 @@
-import { cache } from "react";
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import fs from "node:fs";
+import path from "node:path";
+
 import type {
   EffectiveContent,
   EntityData,
   EntityKind,
   IndexItem,
-  SourceContent,
+  SiteBundle,
+  SiteEntityRecord,
   StoredImage,
 } from "@/lib/types";
 
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Environment variable ${name} is not set`);
-  return value;
-}
-
-const bucket = required("R2_BUCKET");
 const publicUrl = (process.env.R2_PUBLIC_URL ?? "").replace(/\/+$/, "");
+const siteDataFile = process.env.SITE_DATA_FILE
+  ? path.resolve(process.env.SITE_DATA_FILE)
+  : path.resolve(process.cwd(), ".generated", "site.json");
 
-const client = new S3Client({
-  region: "auto",
-  endpoint: required("R2_ENDPOINT"),
-  credentials: {
-    accessKeyId: required("R2_ACCESS_KEY_ID"),
-    secretAccessKey: required("R2_SECRET_ACCESS_KEY"),
-  },
-});
+let cachedBundle: SiteBundle | null = null;
 
-async function bodyToString(body: unknown): Promise<string> {
+function validateBundle(value: unknown): SiteBundle {
+  if (!value || typeof value !== "object") {
+    throw new Error("Invalid site bundle: expected object");
+  }
+
+  const candidate = value as Partial<SiteBundle>;
+
   if (
-    body &&
-    typeof body === "object" &&
-    "transformToString" in body &&
-    typeof (body as { transformToString?: unknown }).transformToString === "function"
+    candidate.version !== 2 ||
+    !candidate.categories ||
+    !candidate.products ||
+    !Array.isArray(candidate.routes) ||
+    !Array.isArray(candidate.root_category_ids)
   ) {
-    return (body as {
-      transformToString: (encoding?: string) => Promise<string>;
-    }).transformToString("utf-8");
-  }
-  throw new Error("Unsupported R2 response body");
-}
-
-function isNotFound(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const candidate = error as {
-    name?: string;
-    $metadata?: { httpStatusCode?: number };
-  };
-  return (
-    candidate.name === "NoSuchKey" ||
-    candidate.name === "NotFound" ||
-    candidate.$metadata?.httpStatusCode === 404
-  );
-}
-
-export const getJson = cache(async <T,>(key: string): Promise<T | null> => {
-  try {
-    const response = await client.send(
-      new GetObjectCommand({ Bucket: bucket, Key: key }),
+    throw new Error(
+      "Invalid site bundle or unsupported version. Expected version 2. " +
+        "Run: python -m src.crawler.sync",
     );
-    return JSON.parse(await bodyToString(response.Body)) as T;
-  } catch (error) {
-    if (isNotFound(error)) return null;
-    throw error;
   }
-});
 
-export const getIndex = cache(async (kind: EntityKind): Promise<IndexItem[]> => {
-  return (await getJson<IndexItem[]>(`index/${kind}.json`)) ?? [];
-});
+  return candidate as SiteBundle;
+}
 
-export const getEntityData = cache(async (
+function loadBundle(): SiteBundle {
+  if (cachedBundle) {
+    return cachedBundle;
+  }
+
+  if (!fs.existsSync(siteDataFile)) {
+    throw new Error(
+      `Site data file is missing: ${siteDataFile}. ` +
+        "Run npm run pull-data or npm run dev (predev pulls it automatically).",
+    );
+  }
+
+  const raw = fs.readFileSync(siteDataFile, "utf-8");
+  cachedBundle = validateBundle(JSON.parse(raw));
+
+  return cachedBundle;
+}
+
+function entityRecords(
+  kind: EntityKind,
+): Record<string, SiteEntityRecord> {
+  const bundle = loadBundle();
+  return kind === "categories" ? bundle.categories : bundle.products;
+}
+
+export async function getSiteBundle(): Promise<SiteBundle> {
+  return loadBundle();
+}
+
+export async function getIndex(kind: EntityKind): Promise<IndexItem[]> {
+  return Object.values(entityRecords(kind))
+    .map((record) => record.index)
+    .sort((a, b) => a.source_id - b.source_id);
+}
+
+export async function getEntityData(
   kind: EntityKind,
   sourceId: number,
-): Promise<EntityData | null> => {
-  return getJson<EntityData>(`${kind}/${sourceId}/data.json`);
-});
+): Promise<EntityData | null> {
+  return entityRecords(kind)[String(sourceId)]?.data ?? null;
+}
 
-export const getSourceContent = cache(async (
+export async function getEffectiveContent(
   kind: EntityKind,
   sourceId: number,
   language = "ru",
-): Promise<SourceContent | null> => {
-  return getJson<SourceContent>(`${kind}/${sourceId}/source/${language}.json`);
-});
+): Promise<EffectiveContent | null> {
+  if (language !== "ru") {
+    return null;
+  }
 
-export const getLocalization = cache(async (
-  kind: EntityKind,
-  sourceId: number,
-  language = "ru",
-): Promise<SourceContent | null> => {
-  return getJson<SourceContent>(
-    `${kind}/${sourceId}/localization/${language}.json`,
-  );
-});
-
-export const getEffectiveContent = cache(async (
-  kind: EntityKind,
-  sourceId: number,
-  language = "ru",
-): Promise<EffectiveContent | null> => {
-  const source = await getSourceContent(kind, sourceId, language);
-  if (!source) return null;
-
-  const localization = await getLocalization(kind, sourceId, language);
-  if (!localization) return { ...source, localized: false };
-
-  return {
-    ...source,
-    ...localization,
-    specifications: {
-      ...(source.specifications ?? {}),
-      ...(localization.specifications ?? {}),
-    },
-    localized: true,
-  };
-});
+  return entityRecords(kind)[String(sourceId)]?.content ?? null;
+}
 
 export function storedImageUrl(image?: StoredImage | null): string | null {
   if (!image) return null;
 
-  // Production: use our public/custom R2 domain.
   if (publicUrl && image.r2_key) {
     return `${publicUrl}/${image.r2_key.replace(/^\/+/, "")}`;
   }
 
-  // Local development: use the original Polygonmach image.
-  // This also ignores stale placeholder image.url values like img.example.ru.
-  return image.source_url || null;
+  if (image.source_url) {
+    return image.source_url;
+  }
+
+  if (image.url && /^https?:\/\//i.test(image.url)) {
+    return image.url;
+  }
+
+  return null;
 }
 
 export function publicObjectUrl(value?: string | null): string | null {
   if (!value) return null;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (!publicUrl) return null;
+
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  if (!publicUrl) {
+    return null;
+  }
+
   return `${publicUrl}/${value.replace(/^\/+/, "")}`;
 }
 
@@ -142,8 +132,10 @@ export function entityMainImage(
   fallback?: string | null,
 ): string | null {
   const image = data?.images?.[0];
-  if (image) return storedImageUrl(image);
 
-  if (!publicUrl) return null;
+  if (image) {
+    return storedImageUrl(image);
+  }
+
   return publicObjectUrl(fallback);
 }

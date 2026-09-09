@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pull-data": "node scripts/pull-site-data.mjs",
+    "predev": "npm run pull-data",
+    "prebuild": "npm run pull-data"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.883.0",
