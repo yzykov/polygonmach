@@ -54,6 +54,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--force-images",
+        action="store_true",
+        help=(
+            "Force re-download and validation of this entity's images. "
+            "Use after deleting or repairing R2 image objects."
+        ),
+    )
+    parser.add_argument(
         "--url",
         help=(
             "Exact Polygonmach source URL override. Use together with "
@@ -245,6 +253,7 @@ async def main() -> None:
                 source_id=source_id,
                 sources=parsed_sources,
                 old_data=old_data,
+                force_images=args.force_images,
             )
 
             data, data_changed = await save_entity_data(

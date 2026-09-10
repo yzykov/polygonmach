@@ -141,6 +141,21 @@ function removeImagesFromHtml(
   return html.replace(/<img\b[^>]*>/gi, "");
 }
 
+function normalizedImageSource(
+  value?: string,
+): string {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    url.search = "";
+    return url.toString();
+  } catch {
+    return value.trim();
+  }
+}
+
 async function CategoryPage({
   route,
 }: {
@@ -370,16 +385,44 @@ async function ProductPage({
       },
     );
 
+  const storedImageBySource = new Map(
+    (data?.images ?? []).flatMap((image) => {
+      const source = normalizedImageSource(
+        image.source_url,
+      );
+      const stored = storedImageUrl(image);
+
+      if (!source || !stored) {
+        return [];
+      }
+
+      return [[source, stored] as const];
+    }),
+  );
+
   const tabImages: GalleryImage[] =
     (content.tabs ?? []).flatMap(
       (tab, tabIndex) =>
-        extractImagesFromHtml(tab.html).map(
-          (src, imageIndex) => ({
-            key: `tab-${tabIndex}-${imageIndex}-${src}`,
-            src,
-            alt:
-              content.title || "Polygonmach",
-          }),
+        extractImagesFromHtml(tab.html).flatMap(
+          (sourceSrc, imageIndex) => {
+            const src =
+              storedImageBySource.get(
+                normalizedImageSource(
+                  sourceSrc,
+                ),
+              );
+
+            if (!src) {
+              return [];
+            }
+
+            return [{
+              key: `tab-${tabIndex}-${imageIndex}-${src}`,
+              src,
+              alt:
+                content.title || "Polygonmach",
+            }];
+          },
         ),
     );
 

@@ -136,6 +136,7 @@ async def sync_entity_images(
     source_id: int,
     sources: dict[str, dict],
     old_data: dict | None,
+    force_images: bool = False,
 ) -> list[dict]:
     source_urls = preferred_image_urls(sources)
 
@@ -153,20 +154,78 @@ async def sync_entity_images(
 
     old_source_urls = list(old_by_source)
 
-    if source_urls == old_source_urls:
-        print("  images: skipped (same source URLs)")
-        return old_images
+    def has_r2_copy(image: dict | None) -> bool:
+        if not isinstance(image, dict):
+            return False
 
-    if all(url in old_by_source for url in source_urls):
+        if not image.get("r2_key"):
+            return False
+
+        content_type = str(
+            image.get("content_type") or ""
+        ).split(";", 1)[0].strip().lower()
+
+        return content_type.startswith("image/")
+
+    requested_old_images = [
+        old_by_source.get(url)
+        for url in source_urls
+    ]
+
+    all_requested_images_stored = all(
+        has_r2_copy(image)
+        for image in requested_old_images
+    )
+
+    if (
+        not force_images
+        and source_urls == old_source_urls
+        and all_requested_images_stored
+    ):
+        print(
+            "  images: skipped "
+            "(same source URLs, all have valid image metadata)"
+        )
+        return [
+            old_by_source[url]
+            for url in source_urls
+        ]
+
+    if (
+        not force_images
+        and source_urls
+        and all_requested_images_stored
+    ):
         print(
             f"  images: reused existing "
             f"({len(old_images)} -> {len(source_urls)})"
         )
-        return [old_by_source[url] for url in source_urls]
+        return [
+            old_by_source[url]
+            for url in source_urls
+        ]
 
     if not source_urls:
         print("  images: none")
         return []
+
+    if force_images:
+        print(
+            f"  images: forced refresh "
+            f"({len(source_urls)} image(s))"
+        )
+
+    missing_r2 = sum(
+        1
+        for image in requested_old_images
+        if not has_r2_copy(image)
+    )
+
+    if missing_r2:
+        print(
+            f"  images: repair required; "
+            f"{missing_r2} image(s) have missing/invalid R2 metadata"
+        )
 
     print(
         f"  images: sync required "
@@ -179,6 +238,7 @@ async def sync_entity_images(
         source_id=source_id,
         source_urls=source_urls,
         old_images=old_images,
+        force_refresh=force_images,
     )
 
 

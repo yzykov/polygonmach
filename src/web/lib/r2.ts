@@ -33,8 +33,7 @@ function validateBundle(value: unknown): SiteBundle {
     !Array.isArray(candidate.root_category_ids)
   ) {
     throw new Error(
-      "Invalid site bundle or unsupported version. Expected version 2. " +
-        "Run: python -m src.crawler.sync",
+      "Invalid site bundle. Run: python -m src.crawler.sync",
     );
   }
 
@@ -95,6 +94,25 @@ export async function getEffectiveContent(
   return entityRecords(kind)[String(sourceId)]?.content ?? null;
 }
 
+function isStoredPublicUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+
+    if (
+      publicUrl &&
+      value.startsWith(`${publicUrl}/`)
+    ) {
+      return true;
+    }
+
+    // Development R2 public endpoints are safe to use even if the
+    // process env was not injected into this module for some reason.
+    return url.hostname.endsWith(".r2.dev");
+  } catch {
+    return false;
+  }
+}
+
 export function storedImageUrl(image?: StoredImage | null): string | null {
   if (!image) return null;
 
@@ -102,14 +120,16 @@ export function storedImageUrl(image?: StoredImage | null): string | null {
     return `${publicUrl}/${image.r2_key.replace(/^\/+/, "")}`;
   }
 
-  if (image.source_url) {
-    return image.source_url;
-  }
-
-  if (image.url && /^https?:\/\//i.test(image.url)) {
+  if (
+    image.url &&
+    /^https?:\/\//i.test(image.url) &&
+    isStoredPublicUrl(image.url)
+  ) {
     return image.url;
   }
 
+  // Never fall back to image.source_url. If there is no confirmed
+  // stored R2 copy, the image is intentionally hidden.
   return null;
 }
 
@@ -117,7 +137,9 @@ export function publicObjectUrl(value?: string | null): string | null {
   if (!value) return null;
 
   if (/^https?:\/\//i.test(value)) {
-    return value;
+    return isStoredPublicUrl(value)
+      ? value
+      : null;
   }
 
   if (!publicUrl) {
