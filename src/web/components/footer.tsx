@@ -23,6 +23,7 @@ export function Footer() {
         <div className="space-y-3 text-sm">
           <div className="font-bold text-zinc-300">Связаться</div>
           <a className="block text-zinc-400 hover:text-white" href={`tel:${site.phoneHref}`}>{site.phone}</a>
+          <a className="block text-zinc-400 hover:text-white" href={`tel:${site.phoneHref2}`}>{site.phone2}</a>
           <a className="block text-zinc-400 hover:text-white" href={`mailto:${site.email}`}>{site.email}</a>
         </div>
       </Container>

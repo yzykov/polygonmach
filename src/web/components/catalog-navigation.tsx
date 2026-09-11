@@ -16,6 +16,8 @@ interface CatalogNavigationProps {
   catalogMenu: CatalogMenuSection[];
   phone: string;
   phoneHref: string;
+  phone2: string;
+  phoneHref2: string;
 }
 
 function Chevron({
@@ -74,6 +76,8 @@ export function CatalogNavigation({
   catalogMenu,
   phone,
   phoneHref,
+  phone2,
+  phoneHref2,
 }: CatalogNavigationProps) {
   const [desktopCatalogOpen, setDesktopCatalogOpen] =
     useState(false);
@@ -380,13 +384,40 @@ export function CatalogNavigation({
         >
           {phone}
         </a>
+        <a
+          href={`tel:${phoneHref2}`}
+          className="shrink-0 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-600"
+        >
+          {phone2}
+        </a>
       </div>
 
       <div className="flex items-center gap-2 lg:hidden">
         <a
           href={`tel:${phoneHref}`}
-          aria-label="Позвонить"
+          aria-label={`Позвонить ${phone}`}
           className="grid h-11 w-11 place-items-center rounded-xl border border-zinc-200 text-zinc-800 transition hover:border-red-200 hover:text-red-600"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-5 w-5"
+            aria-hidden="true"
+          >
+            <path
+              d="M7.2 3.5 9.6 7.8 7.9 9.5c1.2 2.4 3.2 4.4 5.6 5.6l1.7-1.7 4.3 2.4-.7 3.4c-.2.9-1 1.5-1.9 1.5C9.4 20.7 3.3 14.6 3.3 7.1c0-.9.6-1.7 1.5-1.9l2.4-.7Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </a>
+
+        <a
+          href={`tel:${phoneHref2}`}
+          aria-label={`Позвонить ${phone2}`}
+          className="grid h-11 w-11 place-items-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
         >
           <svg
             viewBox="0 0 24 24"
@@ -620,12 +651,19 @@ export function CatalogNavigation({
                     </nav>
                   </div>
               
-                  <div className="border-t border-zinc-100 p-4">
+                  <div className="space-y-2 border-t border-zinc-100 p-4">
                     <a
                       href={`tel:${phoneHref}`}
-                      className="block rounded-xl bg-red-600 px-5 py-4 text-center text-sm font-black text-white"
+                      className="block rounded-xl bg-zinc-950 px-5 py-4 text-center text-sm font-black text-white transition hover:bg-zinc-800"
                     >
                       {phone}
+                    </a>
+
+                    <a
+                      href={`tel:${phoneHref2}`}
+                      className="block rounded-xl bg-red-600 px-5 py-4 text-center text-sm font-black text-white transition hover:bg-red-500"
+                    >
+                      {phone2}
                     </a>
                   </div>
                 </aside>

@@ -116,6 +116,8 @@ export async function Header() {
           catalogMenu={catalogMenu}
           phone={site.phone}
           phoneHref={site.phoneHref}
+          phone2={site.phone2}
+          phoneHref2={site.phoneHref2}
         />
       </Container>
     </header>
