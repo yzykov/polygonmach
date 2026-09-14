@@ -9,7 +9,7 @@ export function Footer() {
         <div>
           <div className="text-xl font-black">{site.name}</div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-400">
-            Официальный дилер в России.
+            Компания "ООО ИМПЕРИЯ ТЕХНИКИ" - официальный дистрибьютор POLYGONMACH (Турция)
           </p>
         </div>
 

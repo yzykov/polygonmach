@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { Bitrix24SiteWidget } from "@/components/bitrix24-site-widget";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
+        <Bitrix24SiteWidget />
       </body>
     </html>
   );

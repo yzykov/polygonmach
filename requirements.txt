@@ -2,3 +2,11 @@ boto3
 httpx
 python-dotenv
 playwright
+
+Bucked ID
+***REMOVED***
+polygonmach
+ID
+***REMOVED***
+SECRET
+***REMOVED***

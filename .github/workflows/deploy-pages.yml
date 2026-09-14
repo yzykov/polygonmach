@@ -42,6 +42,15 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+
+          CONTACT_PHONE: ${{ vars.CONTACT_PHONE }}
+          CONTACT_PHONE_HREF: ${{ vars.CONTACT_PHONE_HREF }}
+          CONTACT_PHONE2: ${{ vars.CONTACT_PHONE2 }}
+          CONTACT_PHONE_HREF2: ${{ vars.CONTACT_PHONE_HREF2 }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+
+          SITE_NAME: ${{ vars.SITE_NAME }}
+          SITE_URL: ${{ vars.SITE_URL }}
         run: npm run build
 
       - name: Verify static export
