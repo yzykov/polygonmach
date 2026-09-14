@@ -45,8 +45,8 @@ jobs:
 
           CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
           CONTACT_PHONE_HREF: ${{ secrets.CONTACT_PHONE_HREF }}
-          CONTACT_PHONE2: ${{ secrets.CONTACT_PHONE_2 }}
-          CONTACT_PHONE_HREF2: ${{ secrets.CONTACT_PHONE_HREF_2 }}
+          CONTACT_PHONE_2: ${{ secrets.CONTACT_PHONE_2 }}
+          CONTACT_PHONE_HREF_2: ${{ secrets.CONTACT_PHONE_HREF_2 }}
           CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
 
           SITE_NAME: ${{ secrets.SITE_NAME }}
