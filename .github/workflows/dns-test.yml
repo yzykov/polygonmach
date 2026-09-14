@@ -1,0 +1,42 @@
+name: DNS debug
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check public DNS
+        run: |
+          echo "=== A ==="
+          dig polygonmach.ru A
+
+          echo "=== WWW ==="
+          dig www.polygonmach.ru CNAME
+
+          echo "=== CAA ==="
+          dig polygonmach.ru CAA
+
+          echo "=== NS ==="
+          dig polygonmach.ru NS
+
+      - name: Check authoritative NIC.RU
+        run: |
+          for ns in \
+            ns3-l2.nic.ru \
+            ns4-cloud.nic.ru \
+            ns4-l2.nic.ru \
+            ns8-cloud.nic.ru \
+            ns8-l2.nic.ru
+          do
+            echo "===== $ns ====="
+            dig @"$ns" polygonmach.ru A +noall +answer
+            dig @"$ns" polygonmach.ru CAA +noall +answer
+            dig @"$ns" www.polygonmach.ru CNAME +noall +answer
+          done
+
+      - name: DNS trace
+        run: |
+          dig +trace polygonmach.ru
