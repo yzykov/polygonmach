@@ -165,12 +165,14 @@ async function CategoryPage({
 
   const [
     content,
+    data,
     categoryIndex,
     productIndex,
     childIds,
     productIds,
   ] = await Promise.all([
     getEffectiveContent("categories", sourceId),
+    getEntityData("categories", sourceId),
     getIndex("categories"),
     getIndex("products"),
     childCategoryIds(sourceId),
@@ -213,6 +215,36 @@ async function CategoryPage({
         Boolean(item),
     );
 
+  const categoryImages: GalleryImage[] =
+    (data?.images ?? []).flatMap(
+      (image, index) => {
+        const src = storedImageUrl(image);
+
+        if (!src) return [];
+
+        return [
+          {
+            key:
+              image.r2_key ||
+              image.source_url ||
+              `category-${index}`,
+            src,
+            alt:
+              index === 0
+                ? content.title ||
+                  "Polygonmach"
+                : `${
+                    content.title ||
+                    "Polygonmach"
+                  } — фото ${index + 1}`,
+          },
+        ];
+      },
+    );
+
+  const mainCategoryImage =
+    categoryImages[0] ?? null;
+
   const descriptionHtml =
     formatSectionHeadings(
       cleanContentHtml(content.html),
@@ -225,7 +257,14 @@ async function CategoryPage({
           items={breadcrumbItems(route)}
         />
 
-        <section className="mt-12 border-b border-zinc-200 pb-12">
+        <section
+          className={[
+            "mt-12 border-b border-zinc-200 pb-12",
+            mainCategoryImage
+              ? "grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
+              : "",
+          ].join(" ")}
+        >
           <div className="max-w-5xl">
             <div className="text-xs font-black uppercase tracking-[0.22em] text-red-600">
               Категория оборудования
@@ -241,6 +280,17 @@ async function CategoryPage({
               фотографии.
             </p>
           </div>
+
+          {mainCategoryImage ? (
+            <div className="overflow-hidden rounded-3xl bg-zinc-100 shadow-sm">
+              <img
+                src={mainCategoryImage.src}
+                alt={mainCategoryImage.alt}
+                className="aspect-[4/3] h-full w-full object-cover"
+                loading="eager"
+              />
+            </div>
+          ) : null}
         </section>
 
         {childCategories.length > 0 ? (
