@@ -11,40 +11,89 @@ interface AboutAdvantage {
   text: string;
 }
 
+interface AboutTextSection {
+  title: string;
+  text: string;
+}
+
 interface AboutContent {
   source_url: string;
   title: string;
   eyebrow: string;
   lead: string;
   intro: string[];
-  mission: {
-    title: string;
-    text: string;
-  };
-  directions_title: string;
-  directions: string[];
   advantages_title: string;
   advantages: AboutAdvantage[];
-  quality: {
-    title: string;
-    text: string;
+  manufacturer: AboutTextSection;
+  quality: AboutTextSection;
+  localization: AboutTextSection;
+  warranty: AboutTextSection & {
+    note: string;
+  };
+  service: AboutTextSection;
+  dealers: AboutTextSection;
+  contacts: {
+    website: string;
+    phone: string;
+    mobile: string;
+    email: string;
   };
 }
 
-const source = sourceData as AboutContent;
-const localization =
-  localizationData as Partial<AboutContent>;
+type AboutLocalization = Partial<
+  Omit<
+    AboutContent,
+    | "manufacturer"
+    | "quality"
+    | "localization"
+    | "warranty"
+    | "service"
+    | "dealers"
+    | "contacts"
+  >
+> & {
+  manufacturer?: Partial<AboutTextSection>;
+  quality?: Partial<AboutTextSection>;
+  localization?: Partial<AboutTextSection>;
+  warranty?: Partial<AboutContent["warranty"]>;
+  service?: Partial<AboutTextSection>;
+  dealers?: Partial<AboutTextSection>;
+  contacts?: Partial<AboutContent["contacts"]>;
+};
+
+const source: AboutContent = sourceData;
+const localization: AboutLocalization = localizationData;
 
 const content: AboutContent = {
   ...source,
   ...localization,
-  mission: {
-    ...source.mission,
-    ...(localization.mission ?? {}),
+  manufacturer: {
+    ...source.manufacturer,
+    ...(localization.manufacturer ?? {}),
   },
   quality: {
     ...source.quality,
     ...(localization.quality ?? {}),
+  },
+  localization: {
+    ...source.localization,
+    ...(localization.localization ?? {}),
+  },
+  warranty: {
+    ...source.warranty,
+    ...(localization.warranty ?? {}),
+  },
+  service: {
+    ...source.service,
+    ...(localization.service ?? {}),
+  },
+  dealers: {
+    ...source.dealers,
+    ...(localization.dealers ?? {}),
+  },
+  contacts: {
+    ...source.contacts,
+    ...(localization.contacts ?? {}),
   },
 };
 
@@ -52,6 +101,23 @@ export const metadata: Metadata = {
   title: `${content.title} — Полигонмаш`,
   description: content.lead,
 };
+
+function TextCard({
+  title,
+  text,
+}: AboutTextSection) {
+  return (
+    <article className="rounded-2xl border border-zinc-200 bg-white p-6 md:p-8">
+      <h2 className="text-2xl font-black tracking-tight text-zinc-950">
+        {title}
+      </h2>
+
+      <p className="mt-4 leading-7 text-zinc-700">
+        {text}
+      </p>
+    </article>
+  );
+}
 
 export default function AboutPage() {
   return (
@@ -89,29 +155,12 @@ export default function AboutPage() {
 
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 md:p-8">
             <div className="text-xs font-black uppercase tracking-[0.2em] text-red-600">
-              {content.mission.title}
+              {content.manufacturer.title}
             </div>
 
             <p className="mt-4 leading-7 text-zinc-700">
-              {content.mission.text}
+              {content.manufacturer.text}
             </p>
-          </div>
-        </section>
-
-        <section className="border-t border-zinc-200 py-16">
-          <h2 className="text-3xl font-black tracking-tight md:text-4xl">
-            {content.directions_title}
-          </h2>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {content.directions.map((direction) => (
-              <div
-                key={direction}
-                className="rounded-2xl border border-zinc-200 bg-white px-5 py-5 text-sm font-bold leading-6 text-zinc-800"
-              >
-                {direction}
-              </div>
-            ))}
           </div>
         </section>
 
@@ -138,14 +187,25 @@ export default function AboutPage() {
           </div>
         </section>
 
+        <section className="grid gap-5 border-t border-zinc-200 py-16 lg:grid-cols-2">
+          <TextCard {...content.quality} />
+          <TextCard {...content.localization} />
+          <TextCard {...content.service} />
+          <TextCard {...content.dealers} />
+        </section>
+
         <section className="border-t border-zinc-200 py-16">
-          <div className="max-w-4xl rounded-2xl bg-zinc-50 p-6 md:p-8">
-            <h2 className="text-2xl font-black tracking-tight">
-              {content.quality.title}
+          <div className="rounded-2xl bg-zinc-50 p-6 md:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-zinc-950">
+              {content.warranty.title}
             </h2>
 
             <p className="mt-4 leading-7 text-zinc-700">
-              {content.quality.text}
+              {content.warranty.text}
+            </p>
+
+            <p className="mt-5 text-sm leading-6 text-zinc-500">
+              {content.warranty.note}
             </p>
           </div>
         </section>
