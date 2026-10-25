@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Bitrix24SiteWidget } from "@/components/bitrix24-site-widget";
+import { YandexMetrika } from "@/components/yandex-metrika";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="ru" data-scroll-behavior="smooth">
       <body>
         <Header />
+        <YandexMetrika />
         <main>{children}</main>
         <Footer />
         <Bitrix24SiteWidget />
