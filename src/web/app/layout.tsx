@@ -3,7 +3,7 @@ import "@/app/globals.css";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Bitrix24SiteWidget } from "@/components/bitrix24-site-widget";
-import { YandexMetrika } from "@/components/yandex-metrika";
+import { YandexMetrika } from "@/components/yandex-metrics";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
